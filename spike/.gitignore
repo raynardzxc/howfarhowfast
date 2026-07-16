@@ -1,0 +1,12 @@
+.env
+motis
+motis/
+ui/
+tiles-profiles/
+motis.tar.bz2
+sl.zip
+*.tmp
+stockholm.osm.pbf
+data/
+results/
+config.yml
