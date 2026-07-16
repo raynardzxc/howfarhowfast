@@ -18,7 +18,7 @@ chmod +x setup.sh test_queries.sh
 ```
 
 The server listens on http://localhost:8080. The MOTIS debug UI is served
-there too, handy for checking routes by hand.
+there too and is useful for checking routes by hand.
 
 ## What the validation showed
 

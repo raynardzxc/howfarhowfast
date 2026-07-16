@@ -28,8 +28,8 @@ Or skip the local server and develop against the cloud one by creating
 - Reachable area = walk coverage from the origin plus every reachable stop,
   rasterized to a 150 m grid and contoured with marching squares.
 - Picking a point in another city switches the app to that city (label,
-  timezone, search bias) without moving the camera; the dropdown switches
-  deliberately and flies there.
+  timezone, search bias) without moving the camera. Selecting a city from
+  the dropdown clears the starting point and moves the map there.
 - Map tiles come from OpenFreeMap (free vector tiles, light and dark styles).
 - All state lives in the URL, so every view is a shareable link.
 
@@ -41,8 +41,8 @@ Or skip the local server and develop against the cloud one by creating
   above the shading), but the km² figure still counts water cells, so it
   overstates a little near shorelines.
 - Responses are raw MOTIS JSON (~4 MB, ~350 KB compressed over the wire by
-  Caddy). A thin proxy returning a compact binary format could cut that by
-  another order of magnitude if it ever matters.
+  Caddy). A proxy returning a compact binary format could reduce that
+  further.
 
 ## Future work
 

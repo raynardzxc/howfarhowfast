@@ -4,14 +4,13 @@ Pick a starting point and a travel time. The map shows everything you can
 reach within that time using public transport and walking. Current cities:
 **Stockholm** and **Helsinki**.
 
-I built this while apartment hunting. Listings tell you the address, but not
-how well connected it is. This makes it easy to check, for example, whether
-work is within 30 minutes of a flat, or which areas would give you a short
-commute.
-
-The project was heavily inspired by the Singapore Travel Time Map
+I built this as a summer project in my free time. The idea came from my
+earlier experiences apartment hunting, where listings tell you the address
+but not how well connected it is, and from the Singapore Travel Time Map
 ([traveltime.sg](https://www.traveltime.sg/),
-[GitHub](https://github.com/Vorld/singapore-travel-time-map)).
+[GitHub](https://github.com/Vorld/singapore-travel-time-map)). With this map
+you can check, for example, whether work is within 30 minutes of a flat, or
+which areas would give you a short commute.
 
 ## Features
 
@@ -23,20 +22,17 @@ The project was heavily inspired by the Singapore Travel Time Map
 
 ## How it works
 
-The system has two parts: a static web app and a routing server. Routing
-happens live, per request, rather than from precomputed tables. That is what
-makes walking pace and travel type free to change on the fly: they are simply
-parameters of the query.
+The system has two parts: a static web app and a routing server.
 
 ### One query per starting point
 
 When you pick a starting point, the app asks the routing server one question:
-from this exact spot, departing at this time and walking at this pace, what
-is the fastest journey to every transit stop in the region, within 120
-minutes? The server runs [MOTIS](https://github.com/motis-project/motis),
-which holds the current timetables and the OpenStreetMap street network, and
-answers in tens of milliseconds. The answer is a list of stops with their
-fastest travel times. Everything after that happens in your browser.
+from this spot, departing at this time and walking at this pace, what is the
+fastest journey to every transit stop in the region, within 120 minutes? The
+server runs [MOTIS](https://github.com/motis-project/motis), which holds the
+current timetables and the OpenStreetMap street network. The answer is a list
+of stops with their fastest travel times. Everything after that happens in
+your browser.
 
 ### Departure times
 
@@ -61,27 +57,27 @@ are scaled by 0.75 to approximate real streets, and the walk out from a stop
 is capped at 30 minutes. The walking range around the starting point itself
 counts too.
 
-All of these circles are stamped onto a 150 m grid, and the outline of the
-covered cells is traced into the smooth shape on the map (marching squares).
-The km² figure is the total area of covered cells.
+Each circle is drawn onto a 150 m grid, and the outline of the covered cells
+becomes the shape on the map (marching squares). The km² figure is the total
+area of covered cells.
 
 Dragging the time slider never re-queries the server. The first answer
 already covers the full 120 minutes, so each new shape is recomputed
 instantly in the browser.
 
-### What the result is, and is not
+### Accuracy
 
 The shape is a planning estimate based on scheduled service. Live delays and
 disruptions are not included. The walk out from stops uses straight-line
-approximations rather than exact street routes, and while water is hidden on
-the map, the km² figure still counts it, so the number runs a little high
-near shorelines. Treat the edges as indicative rather than exact.
+approximations rather than exact street routes. Water is hidden on the map,
+but the km² figure still counts it, so the number runs slightly high near
+shorelines.
 
-### Keeping data fresh
+### Data updates
 
-The server re-downloads the timetable feeds (GTFS) twice a month and
-re-imports them. The feeds hold about three months of schedules, so routing
-stays current between refreshes.
+The server downloads new timetable feeds (GTFS) twice a month and re-imports
+them. The feeds cover about three months of schedules, so routing stays
+current between refreshes.
 
 ## Repository layout
 
