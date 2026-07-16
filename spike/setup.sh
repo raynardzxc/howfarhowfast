@@ -60,28 +60,39 @@ if [[ "${1:-}" != "--serve-only" ]]; then
     mv hsl.zip.tmp hsl.zip
   fi
 
-  # --- 3. OSM extracts (BBBike; metro areas, fine for the spike) -----------
-  if [[ ! -f stockholm.osm.pbf ]]; then
-    echo ">> Downloading Stockholm OSM extract..."
-    curl -fL --http1.1 --retry 8 --retry-all-errors --retry-delay 3 --connect-timeout 30 \
-      -o stockholm.osm.pbf.tmp \
-      "https://download.bbbike.org/osm/bbbike/Stockholm/Stockholm.osm.pbf"
-    mv stockholm.osm.pbf.tmp stockholm.osm.pbf
-  fi
-  if [[ ! -f helsinki.osm.pbf ]]; then
-    echo ">> Downloading Helsinki OSM extract..."
-    curl -fL --http1.1 --retry 8 --retry-all-errors --retry-delay 3 --connect-timeout 30 \
-      -o helsinki.osm.pbf.tmp \
-      "https://download.bbbike.org/osm/bbbike/Helsinki/Helsinki.osm.pbf"
-    mv helsinki.osm.pbf.tmp helsinki.osm.pbf
-  fi
-
-  # --- 3b. Merge extracts (MOTIS takes a single OSM file) --------------------
+  # --- 3. OSM (Geofabrik country files, clipped to each transit region) ------
+  # City-scale extracts (BBBike) proved too small: Stockholm's cut off at
+  # lat 59.57, missing Marsta, Nynashamn, and Norrtalje despite SL serving
+  # them. Country extracts clipped to generous boxes cover the full networks.
   if ! command -v osmium > /dev/null; then
-    echo "osmium is required to merge OSM extracts. Install it with:"
+    echo "osmium is required to clip and merge OSM extracts. Install it with:"
     echo "  brew install osmium-tool"
     exit 1
   fi
+  if [[ ! -f sweden-latest.osm.pbf ]]; then
+    echo ">> Downloading Sweden OSM (~700 MB, one-time)..."
+    curl -fL --http1.1 --retry 8 --retry-all-errors --retry-delay 3 --connect-timeout 30 \
+      -o sweden-latest.osm.pbf.tmp \
+      "https://download.geofabrik.de/europe/sweden-latest.osm.pbf"
+    mv sweden-latest.osm.pbf.tmp sweden-latest.osm.pbf
+  fi
+  if [[ ! -f finland-latest.osm.pbf ]]; then
+    echo ">> Downloading Finland OSM (~600 MB, one-time)..."
+    curl -fL --http1.1 --retry 8 --retry-all-errors --retry-delay 3 --connect-timeout 30 \
+      -o finland-latest.osm.pbf.tmp \
+      "https://download.geofabrik.de/europe/finland-latest.osm.pbf"
+    mv finland-latest.osm.pbf.tmp finland-latest.osm.pbf
+  fi
+  if [[ ! -f stockholm.osm.pbf || sweden-latest.osm.pbf -nt stockholm.osm.pbf ]]; then
+    echo ">> Clipping Stockholm county..."
+    osmium extract -b 17.0,58.6,19.6,60.3 sweden-latest.osm.pbf -o stockholm.osm.pbf --overwrite
+  fi
+  if [[ ! -f helsinki.osm.pbf || finland-latest.osm.pbf -nt helsinki.osm.pbf ]]; then
+    echo ">> Clipping Helsinki region..."
+    osmium extract -b 23.7,59.85,25.8,60.8 finland-latest.osm.pbf -o helsinki.osm.pbf --overwrite
+  fi
+
+  # --- 3b. Merge extracts (MOTIS takes a single OSM file) --------------------
   if [[ ! -f region.osm.pbf || stockholm.osm.pbf -nt region.osm.pbf || helsinki.osm.pbf -nt region.osm.pbf ]]; then
     echo ">> Merging OSM extracts..."
     osmium merge stockholm.osm.pbf helsinki.osm.pbf -o region.osm.pbf --overwrite

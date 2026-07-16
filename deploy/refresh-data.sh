@@ -31,7 +31,9 @@ fetch_zip "https://opendata.samtrafiken.se/gtfs/sl/sl.zip?key=${TRAFIKLAB_KEY}" 
 # Helsinki (HSL, open, no key)
 fetch_zip "https://dev.hsl.fi/gtfs/hsl.zip" hsl.zip
 
-# --- OSM extracts: first run or the 1st of the month ------------------------------
+# --- OSM: Geofabrik country files clipped to each transit region, refreshed
+# on first run or the 1st of the month. (City-scale extracts proved too
+# small: they missed outer stations like Marsta that SL serves.)
 fetch_osm() {  # url -> outfile
   local url="$1" out="$2"
   if [[ ! -f "$out" || "$(date +%d)" == "01" ]]; then
@@ -41,8 +43,17 @@ fetch_osm() {  # url -> outfile
     mv "$out.tmp" "$out"
   fi
 }
-fetch_osm "https://download.bbbike.org/osm/bbbike/Stockholm/Stockholm.osm.pbf" stockholm.osm.pbf
-fetch_osm "https://download.bbbike.org/osm/bbbike/Helsinki/Helsinki.osm.pbf" helsinki.osm.pbf
+fetch_osm "https://download.geofabrik.de/europe/sweden-latest.osm.pbf" sweden-latest.osm.pbf
+fetch_osm "https://download.geofabrik.de/europe/finland-latest.osm.pbf" finland-latest.osm.pbf
+
+if [[ ! -f stockholm.osm.pbf || sweden-latest.osm.pbf -nt stockholm.osm.pbf ]]; then
+  echo ">> Clipping Stockholm county..."
+  osmium extract -b 17.0,58.6,19.6,60.3 sweden-latest.osm.pbf -o stockholm.osm.pbf --overwrite
+fi
+if [[ ! -f helsinki.osm.pbf || finland-latest.osm.pbf -nt helsinki.osm.pbf ]]; then
+  echo ">> Clipping Helsinki region..."
+  osmium extract -b 23.7,59.85,25.8,60.8 finland-latest.osm.pbf -o helsinki.osm.pbf --overwrite
+fi
 
 # --- merge OSM extracts (MOTIS takes a single OSM file) ---------------------------
 if [[ ! -f region.osm.pbf || stockholm.osm.pbf -nt region.osm.pbf || helsinki.osm.pbf -nt region.osm.pbf ]]; then

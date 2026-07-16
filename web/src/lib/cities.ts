@@ -41,3 +41,19 @@ export const DEFAULT_CITY_ID = "stockholm";
 export function getCity(id: string | null | undefined): City {
   return CITIES.find((c) => c.id === id) ?? CITIES.find((c) => c.id === DEFAULT_CITY_ID)!;
 }
+
+/** The city whose center is closest to a point (a picked origin belongs to it). */
+export function nearestCity(lat: number, lng: number): City {
+  let best = CITIES[0];
+  let bestD = Infinity;
+  for (const c of CITIES) {
+    const dLat = lat - c.center[1];
+    const dLng = (lng - c.center[0]) * Math.cos((lat * Math.PI) / 180);
+    const d = dLat * dLat + dLng * dLng;
+    if (d < bestD) {
+      bestD = d;
+      best = c;
+    }
+  }
+  return best;
+}

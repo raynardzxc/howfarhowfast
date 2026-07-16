@@ -3,6 +3,9 @@
 # Caddy fetches and renews Let's Encrypt certificates automatically.
 
 howfarhowfast.duckdns.org {
+	# Compress responses: the one-to-all JSON is ~4 MB raw, ~350 KB gzipped
+	encode zstd gzip
+
 	# CORS for the web app (set only if MOTIS didn't already)
 	header ?Access-Control-Allow-Origin "*"
 

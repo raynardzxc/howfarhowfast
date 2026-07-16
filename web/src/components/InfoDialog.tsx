@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { CITIES } from "../lib/cities";
 
 interface Props {
@@ -13,6 +14,19 @@ function cityList(): string {
 }
 
 export default function InfoDialog({ open, onClose }: Props) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  // Escape closes; focus moves to the close button on open.
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div className="dialog-backdrop" onClick={onClose}>
@@ -23,7 +37,7 @@ export default function InfoDialog({ open, onClose }: Props) {
         aria-labelledby="info-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="dialog-close" onClick={onClose} aria-label="Close">
+        <button ref={closeRef} className="dialog-close" onClick={onClose} aria-label="Close">
           ×
         </button>
 

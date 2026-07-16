@@ -5,10 +5,17 @@ import InfoDialog from "./components/InfoDialog";
 import { oneToAll, reverseGeocode } from "./lib/motis";
 import { computeIsochrone } from "./lib/isochrone";
 import { readUrlState, writeUrlState } from "./lib/url";
-import { getCity } from "./lib/cities";
+import { getCity, nearestCity } from "./lib/cities";
 import { initialTheme, persistTheme, type Theme } from "./lib/theme";
 import type { LatLng, ReachableStop, TravelTypeId, WalkSpeedId } from "./lib/types";
 import { WALK_SPEEDS } from "./lib/types";
+import type { OneToAllResult } from "./lib/motis";
+
+// In-memory cache: toggling travel type or walking pace back and forth
+// shouldn't refetch. Keyed by origin + parameters, capped to the most
+// recent entries.
+const resultCache = new Map<string, OneToAllResult>();
+const CACHE_MAX = 30;
 
 export default function App() {
   const initial = useMemo(readUrlState, []);
@@ -33,7 +40,7 @@ export default function App() {
 
   // Keep the browser tab title in sync with the active city.
   useEffect(() => {
-    document.title = `how far, how fast · ${city.label}, visualised in minutes`;
+    document.title = `how far, how fast · ${city.label}, travel time visualised`;
   }, [city.label]);
 
   // Fetch one-to-all whenever origin / travel type / walk speed change.
@@ -41,12 +48,28 @@ export default function App() {
   useEffect(() => {
     if (!origin) return;
     abortRef.current?.abort();
+
+    const key = `${origin.lat},${origin.lng}|${travelType}|${walkSpeed}|${city.tz}`;
+    const cached = resultCache.get(key);
+    if (cached) {
+      setStops(cached.stops);
+      setBudget(cached.budgetMinutes);
+      setMinutes((m) => Math.min(m, cached.budgetMinutes));
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     setLoading(true);
     setError(null);
     oneToAll(origin, travelType, walkSpeed, city.tz, ctrl.signal)
       .then((r) => {
+        resultCache.set(key, r);
+        if (resultCache.size > CACHE_MAX) {
+          resultCache.delete(resultCache.keys().next().value!);
+        }
         setStops(r.stops);
         setBudget(r.budgetMinutes);
         setMinutes((m) => Math.min(m, r.budgetMinutes));
@@ -83,7 +106,12 @@ export default function App() {
     return computeIsochrone(origin, stops, minutes, WALK_SPEEDS[walkSpeed].ms);
   }, [origin, stops, minutes, walkSpeed]);
 
-  const pickOrigin = useCallback((p: LatLng) => setOrigin(p), []);
+  // Picking a point anywhere adopts the nearest city (label, timezone,
+  // search bias follow the pin), without moving the camera.
+  const pickOrigin = useCallback((p: LatLng) => {
+    setOrigin(p);
+    setCityId(nearestCity(p.lat, p.lng).id);
+  }, []);
 
   const clearOrigin = useCallback(() => {
     setOrigin(null);
@@ -103,11 +131,14 @@ export default function App() {
     );
   }, []);
 
+  // Deliberate switch via the dropdown: clear the origin and fly the map over.
+  const [flyToken, setFlyToken] = useState(0);
   const switchCity = useCallback((id: string) => {
     setCityId(id);
     setOrigin(null); // old origin is meaningless in the new city
     setStops(null);
     setError(null);
+    setFlyToken((t) => t + 1);
   }, []);
 
   const closeInfo = useCallback(() => setInfoOpen(false), []);
@@ -117,6 +148,7 @@ export default function App() {
       <MapView
         city={city}
         theme={theme}
+        flyToken={flyToken}
         origin={origin}
         isochrone={iso?.geojson ?? null}
         onPickOrigin={pickOrigin}
@@ -141,7 +173,7 @@ export default function App() {
         onMinutes={setMinutes}
         onWalkSpeed={setWalkSpeed}
         onTravelType={setTravelType}
-        onPickPlace={(lat, lng) => setOrigin({ lat, lng })}
+        onPickPlace={(lat, lng) => pickOrigin({ lat, lng })}
       />
       {!origin && !infoOpen && (
         <div className="empty-hint">

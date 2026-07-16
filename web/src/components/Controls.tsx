@@ -76,7 +76,7 @@ export default function Controls(props: Props) {
           </button>
         </div>
       </div>
-      <p className="tagline">{props.city.label}, visualised in minutes.</p>
+      <p className="tagline">{props.city.label}, travel time visualised.</p>
 
       <label className="field">
         <span>City</span>

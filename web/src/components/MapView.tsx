@@ -8,6 +8,8 @@ import { mapStyleUrl, type Theme } from "../lib/theme";
 interface Props {
   city: City;
   theme: Theme;
+  /** increments only on a deliberate city switch (dropdown) -> fly the camera */
+  flyToken: number;
   origin: LatLng | null;
   isochrone: GeoJSON.Feature<GeoJSON.MultiPolygon> | null;
   onPickOrigin: (p: LatLng) => void;
@@ -15,7 +17,7 @@ interface Props {
 
 const ISO_COLOR = "#0f9488";
 
-export default function MapView({ city, theme, origin, isochrone, onPickOrigin }: Props) {
+export default function MapView({ city, theme, flyToken, origin, isochrone, onPickOrigin }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
@@ -65,10 +67,17 @@ export default function MapView({ city, theme, origin, isochrone, onPickOrigin }
     mapRef.current?.setStyle(mapStyleUrl(theme));
   }, [theme]);
 
-  // City switch: fly there.
+  // Deliberate city switch (dropdown): fly there. Implicit switches (picking
+  // a point in another city) must not move the camera, so this keys on the
+  // flyToken rather than the city itself.
+  const firstFly = useRef(true);
   useEffect(() => {
+    if (firstFly.current) {
+      firstFly.current = false;
+      return;
+    }
     mapRef.current?.flyTo({ center: city.center, zoom: city.zoom, duration: 1500 });
-  }, [city.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [flyToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const map = mapRef.current;

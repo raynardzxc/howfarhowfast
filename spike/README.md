@@ -34,9 +34,10 @@ there too, handy for checking routes by hand.
 
 ## Notes
 
-- The OSM extract is BBBike's Stockholm metro area. The production server
-  uses the same source for now; a full-county clip from Geofabrik's Sweden
-  extract is a future upgrade.
+- OSM comes from Geofabrik country files (Sweden, Finland; ~1.3 GB total,
+  downloaded once and cached), clipped to each transit region with osmium
+  and merged into `region.osm.pbf`. City-scale extracts were too small: they
+  missed outer stations like Marsta that the SL network serves.
 - GTFS validity is a rolling window of weeks to months, so representative
   departure dates are always computed relative to today.
 - Downloads are atomic (temp file, validate, rename), so an interrupted
