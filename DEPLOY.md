@@ -5,11 +5,12 @@ The system is two parts: a static web app (`web/`) and a routing server
 
 ## What you need
 
-- A small Linux server (Ubuntu 22.04 or 24.04, 1 to 2 GB RAM, x86 or ARM)
+- A small Linux server (Ubuntu 22.04 or 24.04, 2 GB RAM recommended, ~10 GB
+  free disk, x86 or ARM)
 - A domain or subdomain pointed at the server (a free dynamic DNS service
   like DuckDNS works)
-- For Swedish data: a free [Trafiklab](https://www.trafiklab.se) API key for
-  the GTFS Regional Static dataset
+- A free [Trafiklab](https://www.trafiklab.se) API key for the GTFS Regional
+  Static dataset (Swedish data; the Finnish HSL feed is open and needs no key)
 
 ## Routing server
 
@@ -30,11 +31,12 @@ bash /opt/howfarhowfast/deploy/setup-server.sh
 ```
 
 The script downloads MOTIS (matching the server's architecture), fetches the
-SL GTFS feed and a Stockholm OSM extract, imports them, installs a systemd
-service and Caddy (automatic HTTPS), and schedules a data refresh on the 1st
-and 15th of each month (the feeds hold about three months of validity, so
-biweekly keeps schedules current). You can also run
-`deploy/refresh-data.sh` manually at any time.
+SL and HSL GTFS feeds plus OpenStreetMap data (Geofabrik country files,
+clipped to each transit region and merged), imports everything, installs a
+systemd service and Caddy (automatic HTTPS, compressed responses), and
+schedules a data refresh on the 1st and 15th of each month (the feeds hold
+about three months of validity, so biweekly keeps schedules current). You
+can also run `deploy/refresh-data.sh` manually at any time.
 
 Verify from your machine:
 
@@ -54,8 +56,9 @@ JSON mentioning Slussen means the server is up.
 
 ## Running it for another region
 
-- Server: add that region's GTFS feed and OSM extract in the config section
-  of `deploy/setup-server.sh` (there is a commented example).
+- Server: add the region's GTFS feed as a dataset in the config section of
+  `deploy/setup-server.sh`, and its OSM download/clip in
+  `deploy/refresh-data.sh` (follow the existing SL/HSL pattern in both).
 - Frontend: add a city entry in `web/src/lib/cities.ts`.
 
 ## Local development

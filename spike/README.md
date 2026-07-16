@@ -6,10 +6,13 @@ VM (see `../DEPLOY.md`); nothing here is required for the live site.
 
 ## Run it
 
+Prerequisites: a `.env` file here with `TRAFIKLAB_KEY=...`, and osmium
+(`brew install osmium-tool` on macOS, `apt install osmium-tool` on Linux).
+
 ```sh
 cd spike
 chmod +x setup.sh test_queries.sh
-./setup.sh              # downloads MOTIS, SL GTFS (1 Trafiklab request), OSM; imports; serves
+./setup.sh              # downloads MOTIS, SL + HSL GTFS (1 Trafiklab request), OSM; imports; serves
 ./setup.sh --serve-only # later runs: skip downloads and import
 ./test_queries.sh       # in a second terminal: 9 validation queries
 ```

@@ -17,15 +17,19 @@ Or skip the local server and develop against the cloud one by creating
 ## How it works
 
 - One `one-to-all` query to MOTIS per combination of origin, travel type, and
-  walking speed. The response covers the full 120-minute budget.
+  walking speed. The response covers the full 120-minute budget, and the last
+  30 results are cached in memory, so revisiting a combination is instant.
 - The time slider re-thresholds in memory, so dragging it never refetches.
 - Travel type maps to a representative departure: next ordinary Tuesday 08:00
   (rush hour) or 15:00 (afternoon), next Sunday 12:00 (weekend and holidays,
-  since Swedish public holidays generally run a Sunday-level service).
+  since public holidays generally run a Sunday-level service).
 - Walking speed (slow 3.6, average 5.0, fast 6.1 km/h) is sent to the router
   as `pedestrianSpeed` and also used client-side for walk-out distances.
 - Reachable area = walk coverage from the origin plus every reachable stop,
   rasterized to a 150 m grid and contoured with marching squares.
+- Picking a point in another city switches the app to that city (label,
+  timezone, search bias) without moving the camera; the dropdown switches
+  deliberately and flies there.
 - Map tiles come from OpenFreeMap (free vector tiles, light and dark styles).
 - All state lives in the URL, so every view is a shareable link.
 
@@ -36,8 +40,9 @@ Or skip the local server and develop against the cloud one by creating
 - Water areas are masked visually (the basemap's water layer is re-painted
   above the shading), but the km² figure still counts water cells, so it
   overstates a little near shorelines.
-- Responses are raw MOTIS JSON (~4 MB per query). A thin proxy returning a
-  compact format would cut bandwidth ~100x.
+- Responses are raw MOTIS JSON (~4 MB, ~350 KB compressed over the wire by
+  Caddy). A thin proxy returning a compact binary format could cut that by
+  another order of magnitude if it ever matters.
 
 ## Future work
 
