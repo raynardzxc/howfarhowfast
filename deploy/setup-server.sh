@@ -34,13 +34,21 @@ if [[ ! -x ./motis ]] && [[ ! -x ./motis/motis ]]; then
 fi
 MOTIS_BIN=$([[ -x ./motis && -f ./motis ]] && echo "$APP_DIR/motis" || echo "$APP_DIR/motis/motis")
 
+# --- osmium (merges per-city OSM extracts into one file for MOTIS) ------------
+if ! command -v osmium > /dev/null; then
+  echo ">> Installing osmium-tool..."
+  sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool unzip
+fi
+
 # --- config -------------------------------------------------------------------
 # No tiles (OpenFreeMap serves the basemap) -> less RAM, faster import.
+# To add a city: add its GTFS dataset below, and its OSM extract in
+# deploy/refresh-data.sh (which merges all extracts into region.osm.pbf).
 cat > config.yml <<'EOF'
 server:
   host: 127.0.0.1        # only Caddy talks to MOTIS directly
   port: 8080
-osm: stockholm.osm.pbf
+osm: region.osm.pbf
 timetable:
   first_day: TODAY
   num_days: 60
@@ -48,11 +56,8 @@ timetable:
   datasets:
     sl:
       path: sl.zip
-    # To add Helsinki: download the Finnish national/HSL GTFS feed and add:
-    # fi:
-    #   path: finland.zip
-    # ...and replace the OSM file with an extract covering both regions
-    # (or merge extracts with `osmium merge`).
+    hsl:
+      path: hsl.zip
 street_routing: true
 osr_footpath: true
 geocoding: true
@@ -102,8 +107,8 @@ else
   echo "!! Edit deploy/Caddyfile with your domain, copy to /etc/caddy/Caddyfile, then: sudo systemctl reload caddy"
 fi
 
-# --- nightly refresh cron -------------------------------------------------------
+# --- biweekly refresh cron (1st and 15th, 05:30 UTC) ---------------------------
 ( crontab -l 2>/dev/null | grep -v refresh-data ; \
-  echo "30 5 * * * bash $APP_DIR/deploy/refresh-data.sh >> $APP_DIR/refresh.log 2>&1" ) | crontab -
+  echo "30 5 1,15 * * bash $APP_DIR/deploy/refresh-data.sh >> $APP_DIR/refresh.log 2>&1" ) | crontab -
 
 echo ">> Done. Check:  curl -s 'http://127.0.0.1:8080/api/v1/geocode?text=Slussen' | head -c 200"

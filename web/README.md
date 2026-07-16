@@ -1,4 +1,4 @@
-# HowFarHowFast web app
+# Web app
 
 Pick a starting point and a travel time. The map shows everything you can
 reach within that time using public transport and walking.

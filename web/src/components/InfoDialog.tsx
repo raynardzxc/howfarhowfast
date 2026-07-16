@@ -1,6 +1,15 @@
+import { CITIES } from "../lib/cities";
+
 interface Props {
   open: boolean;
   onClose: () => void;
+}
+
+/** "Stockholm and Helsinki" / "Stockholm, Helsinki and Oslo", grows with the registry */
+function cityList(): string {
+  const names = CITIES.map((c) => c.label);
+  if (names.length === 1) return names[0];
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
 export default function InfoDialog({ open, onClose }: Props) {
@@ -18,18 +27,20 @@ export default function InfoDialog({ open, onClose }: Props) {
           ×
         </button>
 
-        <h2 id="info-title">HowFarHowFast</h2>
+        <h2 id="info-title">how far, how fast</h2>
         <p>
           Pick a starting point and a travel time. The map shows everything you can
-          reach within that time using public transport and walking.
+          reach within that time using public transport and walking. Currently
+          available for {cityList()}.
         </p>
 
         <h3>What it's for</h3>
         <p>
-          I mainly built it for apartment hunting: drop a pin on a listing and check if
-          work is within 30 minutes. You can also start from your office instead, to see
-          which areas would give you a short commute. Every view has its own link, so
-          you can save it or send it to someone.
+          I mainly built it for apartment hunting: set the starting point to an
+          apartment's address and check if work is within 30 minutes. You can also
+          start from your office instead, to see which areas would give you a short
+          commute. Every view has its own link, so you can save it or send it to
+          someone.
         </p>
 
         <h3>The controls</h3>
@@ -94,7 +105,11 @@ export default function InfoDialog({ open, onClose }: Props) {
           <a href="https://www.trafiklab.se" target="_blank" rel="noreferrer">
             Trafiklab
           </a>{" "}
-          (CC0). Map tiles by{" "}
+          (CC0). Finnish transit data from{" "}
+          <a href="https://www.hsl.fi/en/hsl/open-data" target="_blank" rel="noreferrer">
+            HSL
+          </a>{" "}
+          (CC BY 4.0). Map tiles by{" "}
           <a href="https://openfreemap.org" target="_blank" rel="noreferrer">
             OpenFreeMap
           </a>{" "}

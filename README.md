@@ -1,8 +1,8 @@
-# HowFarHowFast
+# how far, how fast
 
 Pick a starting point and a travel time. The map shows everything you can
-reach within that time using public transport and walking. First city:
-**Stockholm**.
+reach within that time using public transport and walking. Current cities:
+**Stockholm** and **Helsinki**.
 
 I built this while apartment hunting. Listings tell you the address, but not
 how well connected it is. This makes it easy to check, for example, whether
@@ -79,14 +79,15 @@ than exact.
 
 ### Keeping data fresh
 
-The server re-downloads the region's timetable feed (GTFS) every night and
-re-imports it, so routing always follows the current schedule.
+The server re-downloads the timetable feeds (GTFS) twice a month and
+re-imports them. The feeds hold about three months of schedules, so routing
+stays current between refreshes.
 
 ## Repository layout
 
 - `web/` is the app (Vite + React + TypeScript + MapLibre). See `web/README.md`.
 - `deploy/` sets up the production routing server: MOTIS, HTTPS via Caddy,
-  and the nightly data refresh. See `DEPLOY.md`.
+  and the scheduled data refresh. See `DEPLOY.md`.
 - `spike/` is the same routing stack for local development.
 
 ## Production setup
@@ -107,6 +108,7 @@ See `DEPLOY.md` for the full setup.
 
 - Routing: [MOTIS](https://github.com/motis-project/motis)
 - Swedish transit data: [Trafiklab](https://www.trafiklab.se) (CC0)
+- Finnish transit data: [HSL](https://www.hsl.fi/en/hsl/open-data) (CC BY 4.0)
 - Map tiles: [OpenFreeMap](https://openfreemap.org) (© OpenMapTiles)
 - Street and walking network data ©
   [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors

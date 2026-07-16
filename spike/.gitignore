@@ -5,8 +5,9 @@ ui/
 tiles-profiles/
 motis.tar.bz2
 sl.zip
+hsl.zip
 *.tmp
-stockholm.osm.pbf
+*.osm.pbf
 data/
 results/
 config.yml

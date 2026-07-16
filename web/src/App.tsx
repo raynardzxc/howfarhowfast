@@ -33,7 +33,7 @@ export default function App() {
 
   // Keep the browser tab title in sync with the active city.
   useEffect(() => {
-    document.title = `HowFarHowFast: ${city.label}, visualised in minutes`;
+    document.title = `how far, how fast · ${city.label}, visualised in minutes`;
   }, [city.label]);
 
   // Fetch one-to-all whenever origin / travel type / walk speed change.

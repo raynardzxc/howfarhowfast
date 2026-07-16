@@ -1,4 +1,4 @@
-# Self-hosting HowFarHowFast
+# Self-hosting
 
 The system is two parts: a static web app (`web/`) and a routing server
 (`deploy/`). You can host both for little or no money.
@@ -31,9 +31,10 @@ bash /opt/howfarhowfast/deploy/setup-server.sh
 
 The script downloads MOTIS (matching the server's architecture), fetches the
 SL GTFS feed and a Stockholm OSM extract, imports them, installs a systemd
-service and Caddy (automatic HTTPS), and schedules a nightly data refresh.
-The refresh uses about one Trafiklab request per day, well within the free
-quota.
+service and Caddy (automatic HTTPS), and schedules a data refresh on the 1st
+and 15th of each month (the feeds hold about three months of validity, so
+biweekly keeps schedules current). You can also run
+`deploy/refresh-data.sh` manually at any time.
 
 Verify from your machine:
 

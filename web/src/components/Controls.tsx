@@ -61,7 +61,7 @@ export default function Controls(props: Props) {
   return (
     <div className="controls">
       <div className="header-row">
-        <h1>HowFarHowFast</h1>
+        <h1>how far, how fast</h1>
         <div className="header-buttons">
           <button
             className="icon-btn"
@@ -200,6 +200,7 @@ export default function Controls(props: Props) {
 
       <footer className="attribution">
         Transit data: <a href="https://www.trafiklab.se" target="_blank" rel="noreferrer">Trafiklab</a>
+        {" · "}<a href="https://www.hsl.fi/en/hsl/open-data" target="_blank" rel="noreferrer">HSL</a>
         {" · "}Tiles: <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a>
         {" · "}Data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>
         {" contributors"}

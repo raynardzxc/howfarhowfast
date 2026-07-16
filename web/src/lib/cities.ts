@@ -24,10 +24,16 @@ export const CITIES: City[] = [
     zoom: 10.5,
     tz: "Europe/Stockholm",
   },
-  // To add a city (e.g. Helsinki): add an entry here AND make sure the
-  // routing server has that region's GTFS feed + OSM extract loaded.
-  // { id: "helsinki", label: "Helsinki", country: "Finland",
-  //   center: [24.9384, 60.1699], zoom: 10.5, tz: "Europe/Helsinki" },
+  {
+    id: "helsinki",
+    label: "Helsinki",
+    country: "Finland",
+    center: [24.9384, 60.1699],
+    zoom: 10.5,
+    tz: "Europe/Helsinki",
+  },
+  // To add a city: add an entry here AND load that region's GTFS feed and
+  // OSM extract on the routing server (see deploy/setup-server.sh).
 ];
 
 export const DEFAULT_CITY_ID = "stockholm";
