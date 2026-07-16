@@ -32,8 +32,10 @@ Or skip the local server and develop against the cloud one by creating
 ## Known technical shortcuts
 
 - Walk-out distance is crow-fly times a 0.75 detour factor, capped at 30 min,
-  rather than true street-network distance. Water is not masked out, so the
-  shape can bleed over water near shorelines.
+  rather than true street-network distance.
+- Water areas are masked visually (the basemap's water layer is re-painted
+  above the shading), but the km² figure still counts water cells, so it
+  overstates a little near shorelines.
 - Responses are raw MOTIS JSON (~4 MB per query). A thin proxy returning a
   compact format would cut bandwidth ~100x.
 

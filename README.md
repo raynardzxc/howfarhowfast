@@ -73,9 +73,9 @@ instantly in the browser.
 
 The shape is a planning estimate based on scheduled service. Live delays and
 disruptions are not included. The walk out from stops uses straight-line
-approximations rather than exact street routes, and water is not masked out,
-so shapes can spill over shorelines. Treat the edges as indicative rather
-than exact.
+approximations rather than exact street routes, and while water is hidden on
+the map, the km² figure still counts it, so the number runs a little high
+near shorelines. Treat the edges as indicative rather than exact.
 
 ### Keeping data fresh
 
