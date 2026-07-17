@@ -243,3 +243,32 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   cursor: pointer;
 }
 .dialog-close:hover { background: var(--hover-bg); }
+
+/* Mobile: keep the panel clear of the map's own top-right zoom/geolocate
+   buttons, let it scroll internally instead of running off a short screen,
+   and make tap targets big enough for a finger instead of a cursor. */
+@media (max-width: 640px) {
+  .controls {
+    max-width: calc(100vw - 70px);
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    padding: 12px 14px;
+  }
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+  .origin-chip button {
+    width: 30px;
+    height: 30px;
+    font-size: 17px;
+  }
+  .dialog {
+    padding: 20px 18px;
+  }
+  .dialog-close {
+    width: 36px;
+    height: 36px;
+  }
+}

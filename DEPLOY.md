@@ -59,11 +59,24 @@ JSON mentioning Slussen means the server is up.
 
 ## Frontend on Cloudflare Pages
 
+The frontend deploys as a Cloudflare Worker serving static assets (Workers
+Builds, the current git-connected build system; the older standalone Pages
+build system still works too if you use that instead).
+
 1. Set `VITE_MOTIS_URL` in `web/.env.production` to `https://YOUR_DOMAIN`.
-2. dash.cloudflare.com, then Workers & Pages, Create, Pages, Connect to Git:
-   - Framework preset: **Vite**, Root directory: **web**
-   - Build command: **npm run build**, Output directory: **dist**
-3. Deploy. You get `https://YOUR-PROJECT.pages.dev`; every push redeploys.
+2. dash.cloudflare.com, then Workers & Pages, Create, Connect to Git, pick
+   the repo:
+   - Path: **web**
+   - Build command: **npm run build**
+   - Deploy command: leave the default, **npx wrangler deploy**
+   - Leave "builds for non-production branches" unchecked unless you want
+     preview URLs for other branches
+   - API token: leave Cloudflare's auto-generated one
+3. Cloudflare detects Vite and opens a pull request on the repo adding
+   `web/wrangler.jsonc`, the Cloudflare Vite plugin, and `deploy`/`preview`
+   scripts. Merge it, this is what makes the build and deploy commands
+   above actually work.
+4. Deploy. You get a `*.workers.dev` URL; every push redeploys.
 
 To test the production build locally first: `cd web && npm run build &&
 npm run preview`.

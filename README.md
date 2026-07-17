@@ -88,7 +88,7 @@ current between updates.
 
 ## Production setup
 
-- Frontend: static site on Cloudflare Pages
+- Frontend: static site on Cloudflare Workers
 - Routing: our own [MOTIS](https://github.com/motis-project/motis) server on
   a small cloud VM (`deploy/`)
 - Tiles: [OpenFreeMap](https://openfreemap.org)

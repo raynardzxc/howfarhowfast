@@ -25,6 +25,12 @@ if [[ ! -f .env ]]; then
 fi
 source .env
 
+# --- bzip2 decompressor (tar needs this to extract the MOTIS release archive;
+# fresh Ubuntu images, incl. AWS EC2 ARM64 AMIs, don't ship it) ---------------
+if ! command -v lbzip2 > /dev/null; then
+  sudo apt-get update -qq && sudo apt-get install -y -qq lbzip2
+fi
+
 # --- MOTIS binary (linux ARM) -----------------------------------------------
 if [[ ! -x ./motis ]] && [[ ! -x ./motis/motis ]]; then
   echo ">> Downloading MOTIS (linux-arm64)..."
