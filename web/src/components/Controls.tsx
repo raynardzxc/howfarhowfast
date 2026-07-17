@@ -75,7 +75,23 @@ export default function Controls(props: Props) {
             aria-label={collapsed ? "Expand controls" : "Collapse controls"}
             title={collapsed ? "Expand controls" : "Collapse controls"}
           >
-            {collapsed ? "⌄" : "⌃"}
+            {/* same chevron shape as the select dropdowns below, just
+                rotated, so it reads as the same "arrow" language */}
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 12 12"
+              style={{ transform: collapsed ? undefined : "rotate(180deg)" }}
+            >
+              <path
+                d="M2.5 4.5 6 8l3.5-3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
           <button
             className="icon-btn"
