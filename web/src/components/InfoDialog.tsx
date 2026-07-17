@@ -106,7 +106,15 @@ export default function InfoDialog({ open, onClose }: Props) {
           >
             GitHub
           </a>
-          ). It is open source under the MIT license.
+          ). It is open source under the MIT license, code on{" "}
+          <a
+            href="https://github.com/raynardzxc/howfarhowfast"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub
+          </a>
+          .
         </p>
 
         <h3>Data &amp; attribution</h3>
