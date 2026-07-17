@@ -35,6 +35,12 @@ export default function Controls(props: Props) {
   const [matches, setMatches] = useState<GeocodeMatch[]>([]);
   const debounceRef = useRef<number | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
+  // Start collapsed on phones so the map is visible on load; desktop is
+  // unaffected (matchMedia is false there). Doesn't track later resizes or
+  // rotation, on purpose, to keep this simple.
+  const [collapsed, setCollapsed] = useState(
+    () => window.matchMedia("(max-width: 640px)").matches
+  );
 
   const bias = { lat: props.city.center[1], lng: props.city.center[0] };
 
@@ -65,6 +71,14 @@ export default function Controls(props: Props) {
         <div className="header-buttons">
           <button
             className="icon-btn"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? "Expand controls" : "Collapse controls"}
+            title={collapsed ? "Expand controls" : "Collapse controls"}
+          >
+            {collapsed ? "⌄" : "⌃"}
+          </button>
+          <button
+            className="icon-btn"
             onClick={() => props.onTheme(props.theme === "dark" ? "light" : "dark")}
             aria-label="Toggle light/dark mode"
             title="Toggle light/dark mode"
@@ -76,6 +90,8 @@ export default function Controls(props: Props) {
           </button>
         </div>
       </div>
+      {!collapsed && (
+      <>
       <p className="tagline">{props.city.label}, travel time visualised.</p>
 
       <label className="field">
@@ -205,6 +221,8 @@ export default function Controls(props: Props) {
         {" · "}Data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>
         {" contributors"}
       </footer>
+      </>
+      )}
     </div>
   );
 }
