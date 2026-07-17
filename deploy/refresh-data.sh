@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Biweekly data refresh (cron: 1st and 15th, 05:30 UTC): new GTFS feeds +
-# monthly OSM, re-import, restart. Feeds hold ~3 months of validity, so
-# biweekly keeps schedules current at minimal compute. Run manually any time:
+# Monthly data refresh (cron: 1st of the month, 05:30 UTC): new GTFS feeds +
+# OSM, re-import, restart. Feeds hold ~3 months of validity; monthly is the
+# sensible floor (rarer and seasonal timetable changes go stale). Run
+# manually any time:
 #   bash deploy/refresh-data.sh
 # Usage: refresh-data.sh [--initial]   (--initial: first run, no service restart)
 set -euo pipefail

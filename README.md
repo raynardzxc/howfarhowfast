@@ -75,9 +75,9 @@ shorelines.
 
 ### Data updates
 
-The server downloads new timetable feeds (GTFS) twice a month and re-imports
-them. The feeds cover about three months of schedules, so routing stays
-current between refreshes.
+The server's timetable feeds (GTFS) are re-downloaded and re-imported
+monthly. The feeds cover about three months of schedules, so routing stays
+current between updates.
 
 ## Repository layout
 
@@ -89,8 +89,8 @@ current between refreshes.
 ## Production setup
 
 - Frontend: static site on Cloudflare Pages
-- Routing: our own [MOTIS](https://github.com/motis-project/motis) server on a
-  small cloud VM (`deploy/`)
+- Routing: our own [MOTIS](https://github.com/motis-project/motis) server on
+  a small cloud VM (`deploy/`)
 - Tiles: [OpenFreeMap](https://openfreemap.org)
 
 See `DEPLOY.md` for the full setup.

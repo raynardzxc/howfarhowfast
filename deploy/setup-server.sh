@@ -8,7 +8,7 @@ sudo mkdir -p "$APP_DIR"
 sudo chown "$USER" "$APP_DIR"
 cd "$APP_DIR"
 
-# --- swap (insurance for small droplets during import) ------------------------
+# --- swap (insurance for small servers during import) --------------------------
 if [[ ! -f /swapfile ]]; then
   echo ">> Creating 4G swap file..."
   sudo fallocate -l 4G /swapfile
@@ -107,8 +107,8 @@ else
   echo "!! Edit deploy/Caddyfile with your domain, copy to /etc/caddy/Caddyfile, then: sudo systemctl reload caddy"
 fi
 
-# --- biweekly refresh cron (1st and 15th, 05:30 UTC) ---------------------------
+# --- monthly refresh cron (1st of the month, 05:30 UTC) ------------------------
 ( crontab -l 2>/dev/null | grep -v refresh-data ; \
-  echo "30 5 1,15 * * bash $APP_DIR/deploy/refresh-data.sh >> $APP_DIR/refresh.log 2>&1" ) | crontab -
+  echo "30 5 1 * * bash $APP_DIR/deploy/refresh-data.sh >> $APP_DIR/refresh.log 2>&1" ) | crontab -
 
 echo ">> Done. Check:  curl -s 'http://127.0.0.1:8080/api/v1/geocode?text=Slussen' | head -c 200"

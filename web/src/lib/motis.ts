@@ -5,13 +5,13 @@ import { representativeDeparture } from "./times";
 /**
  * Base URL of the MOTIS API.
  * - dev: "" -> vite proxies /api to the local MOTIS server
- * - prod: set VITE_MOTIS_URL (e.g. https://api.transitous.org)
+ * - prod: set VITE_MOTIS_URL to the routing server's URL
  */
 const API_BASE = import.meta.env.VITE_MOTIS_URL ?? "";
 
-/** Budgets to try, largest first. Public instances (Transitous) may cap
- *  one-to-all below our preferred 120 minutes; we fall back gracefully and
- *  the UI clamps the slider to whatever the server allowed. */
+/** Budgets to try, largest first. A server may cap one-to-all below our
+ *  preferred 120 minutes; we fall back gracefully and the UI clamps the
+ *  slider to whatever the server allowed. */
 const BUDGETS = [MAX_MINUTES, 90];
 
 export interface GeocodeMatch {

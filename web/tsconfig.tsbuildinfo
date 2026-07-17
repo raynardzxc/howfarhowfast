@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/controls.tsx","./src/components/infodialog.tsx","./src/components/mapview.tsx","./src/lib/cities.ts","./src/lib/isochrone.ts","./src/lib/motis.ts","./src/lib/theme.ts","./src/lib/times.ts","./src/lib/types.ts","./src/lib/url.ts"],"version":"5.9.3"}
