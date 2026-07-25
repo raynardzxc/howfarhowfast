@@ -7,6 +7,7 @@ import { computeIsochrone } from "./lib/isochrone";
 import { readUrlState, writeUrlState } from "./lib/url";
 import { getCity, nearestCity } from "./lib/cities";
 import { initialTheme, persistTheme, type Theme } from "./lib/theme";
+import { loadPlaces, placesGeojson, type Place } from "./lib/places";
 import type { LatLng, ReachableStop, TravelTypeId, WalkSpeedId } from "./lib/types";
 import { WALK_SPEEDS } from "./lib/types";
 import type { OneToAllResult } from "./lib/motis";
@@ -26,6 +27,10 @@ export default function App() {
   const [travelType, setTravelType] = useState<TravelTypeId>(initial.travelType);
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [showGrocery, setShowGrocery] = useState(initial.showGrocery);
+  const [showGym, setShowGym] = useState(initial.showGym);
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [placesError, setPlacesError] = useState(false);
 
   const [stops, setStops] = useState<ReachableStop[] | null>(null);
   const [originLabel, setOriginLabel] = useState<string | null>(null);
@@ -83,8 +88,34 @@ export default function App() {
   }, [origin, travelType, walkSpeed, city.tz]);
 
   useEffect(() => {
-    writeUrlState({ origin, minutes, walkSpeed, travelType, cityId });
-  }, [origin, minutes, walkSpeed, travelType, cityId]);
+    writeUrlState({
+      origin,
+      minutes,
+      walkSpeed,
+      travelType,
+      cityId,
+      showGrocery,
+      showGym,
+    });
+  }, [origin, minutes, walkSpeed, travelType, cityId, showGrocery, showGym]);
+
+  // Places data is only fetched once a toggle is actually switched on, so
+  // nobody downloads it who never asks for it. Cached per city inside
+  // loadPlaces, so switching back and forth is free.
+  const wantPlaces = showGrocery || showGym;
+  useEffect(() => {
+    if (!wantPlaces) return;
+    const ctrl = new AbortController();
+    setPlacesError(false);
+    loadPlaces(cityId, ctrl.signal)
+      .then(setPlaces)
+      .catch(() => {
+        if (ctrl.signal.aborted) return;
+        setPlaces([]);
+        setPlacesError(true);
+      });
+    return () => ctrl.abort();
+  }, [wantPlaces, cityId]);
 
   // Show which point was picked (closest address/stop name).
   useEffect(() => {
@@ -105,6 +136,17 @@ export default function App() {
     if (!origin || !stops) return null;
     return computeIsochrone(origin, stops, minutes, WALK_SPEEDS[walkSpeed].ms);
   }, [origin, stops, minutes, walkSpeed]);
+
+  // Re-classified whenever the reachable area changes. A grid lookup per
+  // place, so a slider drag costs far less here than the isochrone itself.
+  const placeLayer = useMemo(() => {
+    if (!wantPlaces || places.length === 0) return null;
+    return placesGeojson(
+      places,
+      { grocery: showGrocery, gym: showGym },
+      iso ? iso.contains : null
+    );
+  }, [wantPlaces, places, showGrocery, showGym, iso]);
 
   // Picking a point anywhere adopts the nearest city (label, timezone,
   // search bias follow the pin), without moving the camera.
@@ -151,6 +193,7 @@ export default function App() {
         flyToken={flyToken}
         origin={origin}
         isochrone={iso?.geojson ?? null}
+        places={placeLayer?.data ?? null}
         onPickOrigin={pickOrigin}
       />
       <Controls
@@ -165,6 +208,12 @@ export default function App() {
         reachableStopCount={iso?.reachableStopCount ?? null}
         areaKm2={iso?.areaKm2 ?? null}
         originLabel={originLabel}
+        showGrocery={showGrocery}
+        showGym={showGym}
+        placeCounts={iso && placeLayer ? placeLayer.counts : null}
+        placesError={placesError}
+        onShowGrocery={setShowGrocery}
+        onShowGym={setShowGym}
         onClearOrigin={clearOrigin}
         onUseMyLocation={useMyLocation}
         onCity={switchCity}

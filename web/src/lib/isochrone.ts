@@ -24,6 +24,16 @@ export interface IsochroneResult {
   reachableStopCount: number;
   /** approximate reachable area in square kilometres */
   areaKm2: number;
+  /**
+   * Is a point inside the reachable area? Reads the same raster the shape was
+   * contoured from, so it is a constant-time grid lookup rather than a
+   * polygon test, and classifying a few thousand points costs nothing.
+   *
+   * Contouring smooths the shape a little, so a point within half a cell of
+   * the edge can fall on the other side of the drawn outline. At a 150 m grid
+   * that is well inside the accuracy of the estimate as a whole.
+   */
+  contains: (lat: number, lng: number) => boolean;
 }
 
 export function computeIsochrone(
@@ -102,6 +112,13 @@ export function computeIsochrone(
     )
   );
 
+  const contains = (lat: number, lng: number): boolean => {
+    const row = Math.floor((maxLat - lat) / cellLat);
+    const col = Math.floor((lng - minLng) / cellLng);
+    if (row < 0 || row >= rows || col < 0 || col >= cols) return false;
+    return mask[row * cols + col] === 1;
+  };
+
   return {
     geojson: {
       type: "Feature",
@@ -110,5 +127,6 @@ export function computeIsochrone(
     },
     reachableStopCount,
     areaKm2,
+    contains,
   };
 }

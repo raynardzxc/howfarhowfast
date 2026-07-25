@@ -163,6 +163,41 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background-position: right 10px center;
 }
 
+/* The coloured swatch next to each label doubles as the map legend, so there
+   is no separate legend to keep in sync. */
+.toggles { display: flex; flex-direction: column; gap: 6px; }
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--panel-text);
+  cursor: pointer;
+}
+.toggle input[type="checkbox"] {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+/* Matches how the dots are drawn on the map: a ring in the background
+   colour, so the swatch works as the legend. */
+.toggle .swatch {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+:root[data-theme="dark"] .toggle .swatch {
+  border-color: #1a1c1e;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+.place-counts { margin-top: 7px; font-size: 11.5px; color: var(--faint); }
+
 .status { min-height: 18px; font-size: 12.5px; color: var(--accent); }
 .status .error { color: var(--error); }
 .status .warn { color: #b45309; }
@@ -267,6 +302,8 @@ body { font-family: system-ui, -apple-system, sans-serif; }
     height: 30px;
     font-size: 17px;
   }
+  .toggles { gap: 10px; }
+  .toggle input[type="checkbox"] { width: 18px; height: 18px; }
   .dialog {
     padding: 20px 18px;
   }

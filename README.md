@@ -18,6 +18,7 @@ which areas would give you a short commute.
 - Travel time from 10 minutes to 2 hours, updates instantly as you drag
 - Three schedules: weekday rush hour, weekday afternoon, weekend and holidays
 - Walking pace (relaxed, normal, brisk) affects the whole journey
+- Optional grocery shop and gym overlays, dimmed when out of reach
 - Reachable area shown in km², light and dark mode, shareable links
 
 ## How it works
@@ -65,6 +66,28 @@ Dragging the time slider never re-queries the server. The first answer
 already covers the full 120 minutes, so each new shape is recomputed
 instantly in the browser.
 
+### Places on the map
+
+Grocery shops and gyms can be switched on as an overlay. Whether each one is
+inside your travel time is decided by reading the same grid the shape was
+drawn from, so it is a grid lookup per place and the slider stays instant.
+Places in reach are drawn solid and the rest are dimmed, which shows both what
+a spot has nearby and what it does not.
+
+The locations come from OpenStreetMap, extracted from the same regional files
+the routing server uses (`tools/extract-places.py`) and shipped with the app
+as one small file per city. Grocery covers supermarkets, convenience shops and
+greengrocers; gyms cover fitness centres. OpenStreetMap is volunteer-mapped,
+so coverage varies and some places will be missing.
+
+To regenerate after refreshing the OSM extracts:
+
+```
+pip install osmium
+python3 tools/extract-places.py spike/stockholm.osm.pbf web/public/data/places-stockholm.json
+python3 tools/extract-places.py spike/helsinki.osm.pbf web/public/data/places-helsinki.json
+```
+
 ### Accuracy
 
 The shape is a planning estimate based on scheduled service. Live delays and
@@ -85,6 +108,7 @@ current between updates.
 - `deploy/` sets up the production routing server: MOTIS, HTTPS via Caddy,
   and the scheduled data refresh. See `DEPLOY.md`.
 - `spike/` is the same routing stack for local development.
+- `tools/` holds one-off data preparation scripts.
 
 ## Production setup
 

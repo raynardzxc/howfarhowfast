@@ -4,6 +4,7 @@ import { TIME_STOPS, TRAVEL_TYPES, WALK_SPEEDS, formatMinutes } from "../lib/typ
 import { CITIES, type City } from "../lib/cities";
 import type { Theme } from "../lib/theme";
 import { geocode, type GeocodeMatch } from "../lib/motis";
+import { PLACE_CATEGORIES, countPhrase, placeColour, type PlaceCounts } from "../lib/places";
 
 interface Props {
   city: City;
@@ -19,6 +20,13 @@ interface Props {
   areaKm2: number | null;
   /** name of the picked starting point (null = none picked yet) */
   originLabel: string | null;
+  showGrocery: boolean;
+  showGym: boolean;
+  /** how many of each are within reach, null before a starting point is set */
+  placeCounts: PlaceCounts | null;
+  placesError: boolean;
+  onShowGrocery: (v: boolean) => void;
+  onShowGym: (v: boolean) => void;
   onClearOrigin: () => void;
   onUseMyLocation: () => void;
   onCity: (id: string) => void;
@@ -210,6 +218,45 @@ export default function Controls(props: Props) {
           ))}
         </select>
       </label>
+
+      <div className="field">
+        <span>Show on the map</span>
+        <div className="toggles">
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={props.showGrocery}
+              onChange={(e) => props.onShowGrocery(e.target.checked)}
+            />
+            <span
+              className="swatch"
+              style={{ background: placeColour("grocery", props.theme) }}
+            />
+            {PLACE_CATEGORIES.grocery.label}
+          </label>
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={props.showGym}
+              onChange={(e) => props.onShowGym(e.target.checked)}
+            />
+            <span className="swatch" style={{ background: placeColour("gym", props.theme) }} />
+            {PLACE_CATEGORIES.gym.label}
+          </label>
+        </div>
+        {(props.showGrocery || props.showGym) && (props.placesError || props.placeCounts) && (
+          <div className="place-counts">
+            {props.placesError
+              ? "Places data isn't available for this city."
+              : `${[
+                  props.showGrocery ? countPhrase(props.placeCounts!.grocery, "grocery") : null,
+                  props.showGym ? countPhrase(props.placeCounts!.gym, "gym") : null,
+                ]
+                  .filter(Boolean)
+                  .join(" and ")} in reach`}
+          </div>
+        )}
+      </div>
 
       <div className="status">
         {props.loading && <span>Calculating…</span>}

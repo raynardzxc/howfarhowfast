@@ -8,6 +8,8 @@ export interface UrlState {
   walkSpeed: WalkSpeedId;
   travelType: TravelTypeId;
   cityId: string;
+  showGrocery: boolean;
+  showGym: boolean;
 }
 
 export function readUrlState(): UrlState {
@@ -25,7 +27,15 @@ export function readUrlState(): UrlState {
   const walkSpeed: WalkSpeedId = ["slow", "avg", "fast"].includes(w) ? w : "avg";
   const d = p.get("d") as TravelTypeId;
   const travelType: TravelTypeId = ["peak", "nonpeak", "weekend"].includes(d) ? d : "peak";
-  return { origin, minutes, walkSpeed, travelType, cityId };
+  return {
+    origin,
+    minutes,
+    walkSpeed,
+    travelType,
+    cityId,
+    showGrocery: p.get("g") === "1",
+    showGym: p.get("y") === "1",
+  };
 }
 
 export function writeUrlState(s: UrlState): void {
@@ -35,6 +45,9 @@ export function writeUrlState(s: UrlState): void {
   p.set("t", String(s.minutes));
   p.set("w", s.walkSpeed);
   p.set("d", s.travelType);
+  // Only written when on, so the usual link stays short.
+  if (s.showGrocery) p.set("g", "1");
+  if (s.showGym) p.set("y", "1");
   const url = `${window.location.pathname}?${p}`;
   window.history.replaceState(null, "", url);
 }

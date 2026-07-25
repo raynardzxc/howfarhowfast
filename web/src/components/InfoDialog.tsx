@@ -64,6 +64,12 @@ export default function InfoDialog({ open, onClose }: Props) {
           hour than on a Sunday. Walking pace is used for the walk to and from the
           stops.
         </p>
+        <p>
+          You can also put grocery shops and gyms on the map. The ones you can reach
+          in the time you set are shown solid, and the ones outside it are dimmed, so
+          you can see what a place has nearby and what it doesn't. These come from
+          OpenStreetMap, which is volunteer-mapped, so expect some to be missing.
+        </p>
 
         <h3>How it works</h3>
         <p>

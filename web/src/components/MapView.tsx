@@ -4,6 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { LatLng } from "../lib/types";
 import type { City } from "../lib/cities";
 import { mapStyleUrl, type Theme } from "../lib/theme";
+import { PLACES_SOURCE_ID, placesLayers } from "../lib/places";
 
 interface Props {
   city: City;
@@ -12,12 +13,21 @@ interface Props {
   flyToken: number;
   origin: LatLng | null;
   isochrone: GeoJSON.Feature<GeoJSON.MultiPolygon> | null;
+  places: GeoJSON.FeatureCollection<GeoJSON.Point> | null;
   onPickOrigin: (p: LatLng) => void;
 }
 
 const ISO_COLOR = "#0f9488";
 
-export default function MapView({ city, theme, flyToken, origin, isochrone, onPickOrigin }: Props) {
+export default function MapView({
+  city,
+  theme,
+  flyToken,
+  origin,
+  isochrone,
+  places,
+  onPickOrigin,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
@@ -25,6 +35,12 @@ export default function MapView({ city, theme, flyToken, origin, isochrone, onPi
   onPickRef.current = onPickOrigin;
   const isochroneRef = useRef(isochrone);
   isochroneRef.current = isochrone;
+  const placesRef = useRef(places);
+  placesRef.current = places;
+  // The styledata handler is installed once, so it reads the current theme
+  // from a ref rather than from a stale closure.
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
   useEffect(() => {
     const map = new maplibregl.Map({
@@ -48,8 +64,9 @@ export default function MapView({ city, theme, flyToken, origin, isochrone, onPi
     // Re-attach our layers whenever a style (re)loads, initial load AND
     // every setStyle() call for theme switches.
     map.on("styledata", () => {
-      ensureLayers(map);
+      ensureLayers(map, themeRef.current);
       setIsochroneData(map, isochroneRef.current);
+      setPlacesData(map, placesRef.current);
     });
     mapRef.current = map;
     return () => {
@@ -88,6 +105,12 @@ export default function MapView({ city, theme, flyToken, origin, isochrone, onPi
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+    setPlacesData(map, places);
+  }, [places]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
     if (origin) {
       if (!markerRef.current) {
         const el = document.createElement("div");
@@ -108,7 +131,7 @@ export default function MapView({ city, theme, flyToken, origin, isochrone, onPi
 }
 
 /** Idempotently (re)create our source + layers on the current style. */
-function ensureLayers(map: maplibregl.Map) {
+function ensureLayers(map: maplibregl.Map, theme: Theme) {
   if (map.getSource("isochrone")) return;
   try {
     map.addSource("isochrone", {
@@ -168,6 +191,15 @@ function ensureLayers(map: maplibregl.Map) {
     if (waterLayer) {
       map.addLayer({ ...waterLayer, id: "isochrone-water-mask" } as never, beforeId);
     }
+
+    // Places sit on top of everything, including the water mask and the
+    // basemap's own labels, so no beforeId here. They are the thing you are
+    // looking for when they are switched on.
+    map.addSource(PLACES_SOURCE_ID, {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] } as GeoJSON.FeatureCollection,
+    });
+    for (const layer of placesLayers(theme)) map.addLayer(layer as never);
   } catch {
     // style may still be loading; the next styledata event will retry
   }
@@ -180,4 +212,13 @@ function setIsochroneData(
   const src = map.getSource("isochrone") as maplibregl.GeoJSONSource | undefined;
   if (!src) return;
   src.setData(iso ?? { type: "FeatureCollection", features: [] });
+}
+
+function setPlacesData(
+  map: maplibregl.Map,
+  places: GeoJSON.FeatureCollection<GeoJSON.Point> | null
+) {
+  const src = map.getSource("places") as maplibregl.GeoJSONSource | undefined;
+  if (!src) return;
+  src.setData(places ?? { type: "FeatureCollection", features: [] });
 }
