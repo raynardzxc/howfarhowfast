@@ -163,8 +163,9 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background-position: right 10px center;
 }
 
-/* The coloured swatch next to each label doubles as the map legend, so there
-   is no separate legend to keep in sync. */
+/* Each row doubles as the map legend, so there is no separate legend to keep in
+   sync: every row shows the pictogram that thing is drawn with on the map, in
+   the colour it is drawn in. */
 .toggles { display: flex; flex-direction: column; gap: 6px; }
 .toggle {
   display: flex;
@@ -182,19 +183,16 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   accent-color: var(--accent);
   cursor: pointer;
 }
-/* Matches how the dots are drawn on the map: a ring in the background
-   colour, so the swatch works as the legend. */
-.toggle .swatch {
+/* One fixed-width slot per row holding the pictogram, so every label starts at
+   the same place. */
+.toggle .slot {
   flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1.5px solid #fff;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
-}
-:root[data-theme="dark"] .toggle .swatch {
-  border-color: #1a1c1e;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+  width: 19px;
+  height: 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
 }
 .place-counts { margin-top: 7px; font-size: 11.5px; color: var(--faint); }
 

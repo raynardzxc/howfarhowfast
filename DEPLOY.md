@@ -72,14 +72,14 @@ build system still works too if you use that instead).
    - Leave "builds for non-production branches" unchecked unless you want
      preview URLs for other branches
    - API token: leave Cloudflare's auto-generated one
-3. Cloudflare detects Vite and opens a pull request on the repo adding
+3. Cloudflare detects Vite and, on a fresh repo, opens a pull request adding
    `web/wrangler.jsonc`, the Cloudflare Vite plugin, and `deploy`/`preview`
-   scripts. Merge it, this is what makes the build and deploy commands
-   above actually work.
+   scripts. That config is already committed here, so there may be nothing to
+   merge.
 4. Deploy. You get a `*.workers.dev` URL; every push redeploys.
 
-To test the production build locally first: `cd web && npm run build &&
-npm run preview`.
+To test the production build locally first: `cd web && npm run preview`, which
+builds and then serves it through wrangler.
 
 ## Running it for another region
 

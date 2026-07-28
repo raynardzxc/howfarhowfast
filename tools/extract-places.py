@@ -101,7 +101,9 @@ def resolve_way_centroids(path: str, pending_ways, wanted_nodes):
 
 def dedupe(places):
     """Drop near-duplicates: same category and name within DEDUPE_METRES."""
-    buckets: dict[tuple, list] = defaultdict(list)
+    # A plain dict read with .get, so probing the 3x3 neighbourhood does not
+    # insert nine empty buckets per place.
+    buckets: dict[tuple, list] = {}
     kept = []
     for category, name, lng, lat in places:
         m_per_deg_lng = M_PER_DEG_LAT * math.cos(math.radians(lat))
@@ -113,7 +115,7 @@ def dedupe(places):
         duplicate = False
         for dr in (-1, 0, 1):
             for dc in (-1, 0, 1):
-                for other in buckets[(category, name, row + dr, col + dc)]:
+                for other in buckets.get((category, name, row + dr, col + dc), ()):
                     d_lat = (lat - other[1]) * M_PER_DEG_LAT
                     d_lng = (lng - other[0]) * m_per_deg_lng
                     if d_lat * d_lat + d_lng * d_lng <= DEDUPE_METRES**2:
@@ -125,7 +127,7 @@ def dedupe(places):
                 break
         if duplicate:
             continue
-        buckets[(category, name, row, col)].append((lng, lat))
+        buckets.setdefault((category, name, row, col), []).append((lng, lat))
         kept.append((category, name, lng, lat))
     return kept
 

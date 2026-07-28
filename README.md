@@ -18,6 +18,7 @@ which areas would give you a short commute.
 - Travel time from 10 minutes to 2 hours, updates instantly as you drag
 - Three schedules: weekday rush hour, weekday afternoon, weekend and holidays
 - Walking pace (relaxed, normal, brisk) affects the whole journey
+- Metro, train, tram and trunk bus lines in their operators' colours, with stops named
 - Optional grocery shop and gym overlays, dimmed when out of reach
 - Reachable area shown in km², light and dark mode, shareable links
 
@@ -66,23 +67,31 @@ Dragging the time slider never re-queries the server. The first answer
 already covers the full 120 minutes, so each new shape is recomputed
 instantly in the browser.
 
-### Places on the map
+### Overlays
 
-Grocery shops and gyms can be switched on as an overlay. Whether each one is
-inside your travel time is decided by reading the same grid the shape was
-drawn from, so it is a grid lookup per place and the slider stays instant.
-Places in reach are drawn solid and the rest are dimmed, which shows both what
-a spot has nearby and what it does not.
+Metro, commuter rail, tram, light rail and trunk buses are drawn in each
+operator's line colours, under three toggles: metro and commuter rail on by
+default, tram and bus off. Buses cover trunk routes only, on each operator's own
+definition, since the full networks run to 559 and 417 routes and would bury the
+map. Helsinki brands trunk buses in the metro's orange, so line weight is what
+tells the two apart.
 
-The locations come from OpenStreetMap, extracted from the same regional files
-the routing server uses (`tools/extract-places.py`) and shipped with the app
-as one small file per city. Grocery covers supermarkets, convenience shops and
-greengrocers; gyms cover fitness centres. OpenStreetMap is volunteer-mapped,
-so coverage varies and some places will be missing.
+A wide view shows lines only. Stops appear from zoom 12.5 as their mode's
+pictogram, the same icon used in the toggle, and their names follow at 13.2.
+Where icons would overlap, one is dropped, so the map thins out as you zoom
+away, keeping metro ahead of tram and bus.
 
-To regenerate after refreshing the OSM extracts:
+Grocery shops and gyms have their own toggles, drawn as a basket and a dumbbell.
+Anything out of reach is drawn in a paler shade of the same colour. Locations come
+from OpenStreetMap, so some will be missing.
+
+Both overlays are built from data the routing server already uses, the GTFS
+feeds and the OSM extracts, and ship with the app as one file per city. To
+regenerate:
 
 ```
+python3 tools/extract-transit.py spike/sl.zip stockholm web/public/data/transit-stockholm.json
+python3 tools/extract-transit.py spike/hsl.zip helsinki web/public/data/transit-helsinki.json
 pip install osmium
 python3 tools/extract-places.py spike/stockholm.osm.pbf web/public/data/places-stockholm.json
 python3 tools/extract-places.py spike/helsinki.osm.pbf web/public/data/places-helsinki.json

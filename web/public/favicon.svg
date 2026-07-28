@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="how far, how fast">
+  <!--
+    The thing the app draws: a reachable area with your starting point in it.
+    Teal is the shading colour used on the map, and the shape is a deliberately
+    irregular blob rather than a circle, because a travel-time area never is one.
+
+    The centre dot is near-black rather than teal. Drawn in the background teal
+    it read as a hole punched through the shape, turning the whole icon into a
+    doughnut.
+  -->
+  <rect width="32" height="32" rx="7" fill="#0f9488"/>
+  <path d="M16 5.2c5.3 0 9.9 2.7 10.5 7 .6 4.4-2.4 6.3-3.7 9.5-1.1 3.2-3.1 5.2-7.1 5.2-3.9 0-6.5-1.4-8.5-4.3C5.1 19.5 4.4 15.8 5.8 12.2 7.2 8.6 10.9 5.2 16 5.2Z" fill="#fff"/>
+  <circle cx="16" cy="16" r="2.8" fill="#0d3b36"/>
+</svg>

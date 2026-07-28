@@ -4,7 +4,9 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { LatLng } from "../lib/types";
 import type { City } from "../lib/cities";
 import { mapStyleUrl, type Theme } from "../lib/theme";
-import { PLACES_SOURCE_ID, placesLayers } from "../lib/places";
+import { PLACES_SOURCE_ID, placeIcons, placesLayers } from "../lib/places";
+import { TRANSIT_SOURCE_ID, transitLayers } from "../lib/transit";
+import { modeIcons } from "../lib/icons";
 
 interface Props {
   city: City;
@@ -14,6 +16,7 @@ interface Props {
   origin: LatLng | null;
   isochrone: GeoJSON.Feature<GeoJSON.MultiPolygon> | null;
   places: GeoJSON.FeatureCollection<GeoJSON.Point> | null;
+  transit: GeoJSON.FeatureCollection | null;
   onPickOrigin: (p: LatLng) => void;
 }
 
@@ -26,6 +29,7 @@ export default function MapView({
   origin,
   isochrone,
   places,
+  transit,
   onPickOrigin,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,10 +41,14 @@ export default function MapView({
   isochroneRef.current = isochrone;
   const placesRef = useRef(places);
   placesRef.current = places;
+  const transitRef = useRef(transit);
+  transitRef.current = transit;
   // The styledata handler is installed once, so it reads the current theme
   // from a ref rather than from a stale closure.
   const themeRef = useRef(theme);
   themeRef.current = theme;
+  // Which theme the layers currently on the map were built for.
+  const builtForRef = useRef<Theme | null>(null);
 
   useEffect(() => {
     const map = new maplibregl.Map({
@@ -64,9 +72,14 @@ export default function MapView({
     // Re-attach our layers whenever a style (re)loads, initial load AND
     // every setStyle() call for theme switches.
     map.on("styledata", () => {
-      ensureLayers(map, themeRef.current);
+      // Only refill the sources when the layers were actually (re)created.
+      // styledata also fires for sprite loads and for our own mutations, and
+      // refilling on each one re-posted the whole network to the worker for
+      // nothing. Ordinary data changes are handled by the effects below.
+      if (!ensureLayers(map, themeRef.current, builtForRef)) return;
       setIsochroneData(map, isochroneRef.current);
       setPlacesData(map, placesRef.current);
+      setSourceData(map, TRANSIT_SOURCE_ID, transitRef.current);
     });
     mapRef.current = map;
     return () => {
@@ -80,19 +93,27 @@ export default function MapView({
   }, []);
 
   // Theme switch: swap basemap style (layers are re-added via "styledata").
+  // Skipped on mount, since the map was constructed with this style already.
+  // Calling setStyle with the same URL still refetches it and diffs against a
+  // serialised style that includes our own layers, so it tore them all down and
+  // rebuilt them on every page load.
+  const builtTheme = useRef(theme);
   useEffect(() => {
+    if (builtTheme.current === theme) return;
+    builtTheme.current = theme;
     mapRef.current?.setStyle(mapStyleUrl(theme));
   }, [theme]);
 
   // Deliberate city switch (dropdown): fly there. Implicit switches (picking
   // a point in another city) must not move the camera, so this keys on the
   // flyToken rather than the city itself.
-  const firstFly = useRef(true);
+  // Compares the token rather than tracking "have I run once", because a boolean
+  // ref survives React StrictMode's double mount and made the second pass fly
+  // the camera on load.
+  const lastFly = useRef(flyToken);
   useEffect(() => {
-    if (firstFly.current) {
-      firstFly.current = false;
-      return;
-    }
+    if (lastFly.current === flyToken) return;
+    lastFly.current = flyToken;
     mapRef.current?.flyTo({ center: city.center, zoom: city.zoom, duration: 1500 });
   }, [flyToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -107,6 +128,12 @@ export default function MapView({
     if (!map) return;
     setPlacesData(map, places);
   }, [places]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    setSourceData(map, TRANSIT_SOURCE_ID, transit);
+  }, [transit]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -130,10 +157,38 @@ export default function MapView({
   return <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />;
 }
 
-/** Idempotently (re)create our source + layers on the current style. */
-function ensureLayers(map: maplibregl.Map, theme: Theme) {
-  if (map.getSource("isochrone")) return;
+// Everything we add to the basemap, innermost last, so they can be torn down in
+// an order that leaves no source still in use.
+const OUR_LAYERS = [
+  "places-label",
+  "places-dot",
+  "transit-stop",
+  "transit-line",
+  "isochrone-water-mask",
+  "isochrone-edge",
+  "isochrone-fill",
+];
+const OUR_SOURCES = [PLACES_SOURCE_ID, TRANSIT_SOURCE_ID, "isochrone"];
+
+/**
+ * Idempotently (re)create our sources and layers on the current style.
+ *
+ * Rebuilds when the theme changes, not only when the style has been wiped.
+ * Almost everything we add is theme-dependent (label colours, the cloned water
+ * layer, the marker images), and how much of it survives a setStyle is not
+ * something to rely on: switching light to dark used to leave the markers in
+ * their old colours until the page was reloaded. So this tears our own work
+ * down and puts it back rather than assuming the swap did it for us.
+ */
+function ensureLayers(
+  map: maplibregl.Map,
+  theme: Theme,
+  builtFor: { current: Theme | null }
+): boolean {
+  if (map.getSource("isochrone") && builtFor.current === theme) return false;
   try {
+    for (const id of OUR_LAYERS) if (map.getLayer(id)) map.removeLayer(id);
+    for (const id of OUR_SOURCES) if (map.getSource(id)) map.removeSource(id);
     map.addSource("isochrone", {
       type: "geojson",
       data: { type: "FeatureCollection", features: [] },
@@ -192,6 +247,34 @@ function ensureLayers(map: maplibregl.Map, theme: Theme) {
       map.addLayer({ ...waterLayer, id: "isochrone-water-mask" } as never, beforeId);
     }
 
+    // The network goes on top of the basemap, no beforeId. Anywhere lower and
+    // roads, buildings and place labels draw straight over the lines, which
+    // looks broken. That also puts it above the water mask, so bridges and
+    // water crossings stay continuous.
+    // Full opacity rather than a muted wash, because lines that share track
+    // are drawn once per line and any transparency would compound where they
+    // overlap, making trunk sections darker than branches.
+    // Stop pictograms have to be registered before the layer that names them,
+    // and a style swap clears images along with the layers.
+    for (const icon of modeIcons(theme)) {
+      if (!map.hasImage(icon.id)) {
+        map.addImage(icon.id, icon.image, { pixelRatio: icon.pixelRatio });
+      }
+    }
+    map.addSource(TRANSIT_SOURCE_ID, {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] } as GeoJSON.FeatureCollection,
+    });
+    for (const layer of transitLayers(theme)) map.addLayer(layer as never);
+
+    // Marker shapes have to exist before the layer that names them, and a
+    // style swap clears registered images along with the layers.
+    for (const icon of placeIcons(theme)) {
+      if (!map.hasImage(icon.id)) {
+        map.addImage(icon.id, icon.image, { pixelRatio: icon.pixelRatio });
+      }
+    }
+
     // Places sit on top of everything, including the water mask and the
     // basemap's own labels, so no beforeId here. They are the thing you are
     // looking for when they are switched on.
@@ -200,8 +283,16 @@ function ensureLayers(map: maplibregl.Map, theme: Theme) {
       data: { type: "FeatureCollection", features: [] } as GeoJSON.FeatureCollection,
     });
     for (const layer of placesLayers(theme)) map.addLayer(layer as never);
-  } catch {
-    // style may still be loading; the next styledata event will retry
+
+    builtFor.current = theme;
+    return true;
+  } catch (e) {
+    // The style may still be loading, in which case the next styledata event
+    // retries, and builtFor is left alone so the retry rebuilds rather than
+    // skipping. Logged rather than swallowed: a genuinely malformed layer would
+    // otherwise leave the map bare with nothing in the console to explain it.
+    console.warn("ensureLayers failed, will retry on the next styledata", e);
+    return false;
   }
 }
 
@@ -218,7 +309,15 @@ function setPlacesData(
   map: maplibregl.Map,
   places: GeoJSON.FeatureCollection<GeoJSON.Point> | null
 ) {
-  const src = map.getSource("places") as maplibregl.GeoJSONSource | undefined;
+  setSourceData(map, PLACES_SOURCE_ID, places);
+}
+
+function setSourceData(
+  map: maplibregl.Map,
+  id: string,
+  data: GeoJSON.FeatureCollection | null
+) {
+  const src = map.getSource(id) as maplibregl.GeoJSONSource | undefined;
   if (!src) return;
-  src.setData(places ?? { type: "FeatureCollection", features: [] });
+  src.setData(data ?? { type: "FeatureCollection", features: [] });
 }

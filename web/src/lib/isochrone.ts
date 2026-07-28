@@ -105,7 +105,9 @@ export function computeIsochrone(
 
   // Marching squares -> polygons in grid space -> lng/lat.
   const generator = contours().size([cols, rows]).smooth(true).thresholds([0.5]);
-  const [contour] = generator(Array.from(mask));
+  // Passed straight in: d3-contour only reads .length and indexes, and
+  // Array.from copied the whole grid on every slider step.
+  const [contour] = generator(mask as unknown as number[]);
   const coordinates: GeoJSON.Position[][][] = contour.coordinates.map((poly) =>
     poly.map((ring) =>
       ring.map(([x, y]) => [minLng + x * cellLng, maxLat - y * cellLat])

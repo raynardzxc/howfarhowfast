@@ -5,6 +5,16 @@ import { CITIES, type City } from "../lib/cities";
 import type { Theme } from "../lib/theme";
 import { geocode, type GeocodeMatch } from "../lib/motis";
 import { PLACE_CATEGORIES, countPhrase, placeColour, type PlaceCounts } from "../lib/places";
+import {
+  DEFAULT_STROKE,
+  ICON_BOX,
+  LEGEND_ICON_PX,
+  MODE_ICON_PATHS,
+  PLACE_ICON_PATHS,
+  strokeFor,
+  type IconName,
+  type PlaceIconName,
+} from "../lib/icons";
 
 interface Props {
   city: City;
@@ -22,11 +32,18 @@ interface Props {
   originLabel: string | null;
   showGrocery: boolean;
   showGym: boolean;
+  showRailway: boolean;
+  showTram: boolean;
+  showBus: boolean;
   /** how many of each are within reach, null before a starting point is set */
   placeCounts: PlaceCounts | null;
   placesError: boolean;
+  transitError: boolean;
   onShowGrocery: (v: boolean) => void;
   onShowGym: (v: boolean) => void;
+  onShowRailway: (v: boolean) => void;
+  onShowTram: (v: boolean) => void;
+  onShowBus: (v: boolean) => void;
   onClearOrigin: () => void;
   onUseMyLocation: () => void;
   onCity: (id: string) => void;
@@ -37,6 +54,45 @@ interface Props {
   onTravelType: (t: TravelTypeId) => void;
   onPickPlace: (lat: number, lng: number) => void;
 }
+
+/**
+ * The same pictograms the map draws, from one shared set of paths so the legend
+ * and the map cannot drift apart.
+ *
+ * Transit modes are drawn in the panel's own text colour, since on the map their
+ * colour belongs to the line rather than the mode. The two place overlays keep
+ * their category colour, because that is exactly how they appear on the map.
+ */
+function Icon({ paths, colour, stroke }: { paths: string[]; colour?: string; stroke?: number }) {
+  return (
+    <svg
+      width={LEGEND_ICON_PX}
+      height={LEGEND_ICON_PX}
+      viewBox={`0 0 ${ICON_BOX} ${ICON_BOX}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke ?? DEFAULT_STROKE}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={colour ? { color: colour } : undefined}
+      aria-hidden="true"
+    >
+      {paths.map((d, i) => (
+        <path key={i} d={d} />
+      ))}
+    </svg>
+  );
+}
+
+const ModeIcon = ({ name }: { name: IconName }) => (
+  <Icon paths={MODE_ICON_PATHS[name]} stroke={strokeFor(name)} />
+);
+
+// The places carry their own colour, since on the map that is what tells a
+// grocery shop from a gym.
+const PlaceIcon = ({ name, colour }: { name: PlaceIconName; colour: string }) => (
+  <Icon paths={PLACE_ICON_PATHS[name]} colour={colour} stroke={strokeFor(name)} />
+);
 
 export default function Controls(props: Props) {
   const [query, setQuery] = useState("");
@@ -69,6 +125,10 @@ export default function Controls(props: Props) {
         /* aborted or offline, ignore */
       }
     }, 250);
+    return () => {
+      window.clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, props.city.id]);
 
@@ -181,7 +241,9 @@ export default function Controls(props: Props) {
       <label className="field">
         <span>How much time? <strong>{formatMinutes(props.minutes)}</strong></span>
         {(() => {
+          // Never empty: a zero-length list gives max={-1} and NaN minutes.
           const stops = TIME_STOPS.filter((t) => t <= props.maxMinutes);
+          if (stops.length === 0) stops.push(TIME_STOPS[0]);
           return (
             <input
               type="range"
@@ -225,13 +287,46 @@ export default function Controls(props: Props) {
           <label className="toggle">
             <input
               type="checkbox"
+              checked={props.showRailway}
+              onChange={(e) => props.onShowRailway(e.target.checked)}
+            />
+            <span className="slot">
+              <ModeIcon name="train" />
+            </span>
+            Metro and commuter train
+          </label>
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={props.showTram}
+              onChange={(e) => props.onShowTram(e.target.checked)}
+            />
+            <span className="slot">
+              <ModeIcon name="tram" />
+            </span>
+            Tram
+          </label>
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={props.showBus}
+              onChange={(e) => props.onShowBus(e.target.checked)}
+            />
+            <span className="slot">
+              <ModeIcon name="bus" />
+            </span>
+            Trunk bus
+          </label>
+          <label className="toggle">
+            <input
+              type="checkbox"
               checked={props.showGrocery}
               onChange={(e) => props.onShowGrocery(e.target.checked)}
             />
-            <span
-              className="swatch"
-              style={{ background: placeColour("grocery", props.theme) }}
-            />
+            {/* Same pictogram and colour as on the map. */}
+            <span className="slot">
+              <PlaceIcon name="grocery" colour={placeColour("grocery", props.theme)} />
+            </span>
             {PLACE_CATEGORIES.grocery.label}
           </label>
           <label className="toggle">
@@ -240,10 +335,15 @@ export default function Controls(props: Props) {
               checked={props.showGym}
               onChange={(e) => props.onShowGym(e.target.checked)}
             />
-            <span className="swatch" style={{ background: placeColour("gym", props.theme) }} />
+            <span className="slot">
+              <PlaceIcon name="gym" colour={placeColour("gym", props.theme)} />
+            </span>
             {PLACE_CATEGORIES.gym.label}
           </label>
         </div>
+        {props.transitError && (
+          <div className="place-counts">Network data isn't available for this city.</div>
+        )}
         {(props.showGrocery || props.showGym) && (props.placesError || props.placeCounts) && (
           <div className="place-counts">
             {props.placesError
