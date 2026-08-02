@@ -63,13 +63,15 @@ if [[ ! -f region.osm.pbf || stockholm.osm.pbf -nt region.osm.pbf || helsinki.os
 fi
 
 # --- import + restart --------------------------------------------------------------
+# The service is stopped for the import, and restarted from an EXIT trap rather
+# than a plain line below it. A failed import must not leave the service down:
+# the previous data is still intact, so serving it is better than serving
+# nothing until someone notices.
 MOTIS_BIN=$([[ -x ./motis && -f ./motis ]] && echo "$APP_DIR/motis" || echo "$APP_DIR/motis/motis")
 if [[ "${1:-}" != "--initial" ]]; then
   sudo systemctl stop motis
+  trap 'echo "[$(date -Is)] restarting motis"; sudo systemctl start motis' EXIT
 fi
 "$MOTIS_BIN" import
-if [[ "${1:-}" != "--initial" ]]; then
-  sudo systemctl start motis
-fi
 
 echo "[$(date -Is)] refresh done"

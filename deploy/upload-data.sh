@@ -24,7 +24,11 @@ echo ">> Activating on server..."
 ssh "$HOST" 'set -e
   cd /opt/howfarhowfast
   sudo systemctl stop motis 2>/dev/null || true
+  # Restart from a trap, so a failed swap leaves the service running on the
+  # old data rather than leaving it stopped.
+  trap "sudo systemctl start motis" EXIT
   rsync -a --delete data.staging/ data/
+  trap - EXIT
   sudo systemctl start motis
   sleep 3
   systemctl is-active --quiet motis && echo "motis is running" || { echo "motis failed to start; check: journalctl -u motis -n 50"; exit 1; }
